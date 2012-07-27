@@ -5,6 +5,7 @@
 '   Chris J Breisch (cjbreisch@altavista.net) 
 '   Francesco Delfino (pluto@tipic.com)
 '   Mizrahi Rafael (rafim@mainsoft.com)
+'   Matthew Fearnley (matthew.w.fearnley@gmail.com)
 '
 
 '
@@ -41,31 +42,29 @@ Namespace Microsoft.VisualBasic
         ' Declarations
         ' Constructors
         ' Properties
-        Private Shared m_rnd As Random = New Random
-        Private Shared m_last As Single = CType(m_rnd.NextDouble(), Single)
+        Private Shared m_seed As Int32
         ' Methods
         Public Shared Function Rnd() As Single
-            m_last = CType(m_rnd.NextDouble(), Single)
-            Return m_last
+            m_seed = (m_seed * &HFD43FD& + &HC39EC3) And &HFFFFFF
+            Return m_seed / &H1000000
         End Function
         Public Shared Function Rnd(ByVal Number As Single) As Single
             If Number = 0.0 Then
-                Return m_last
+                Return m_seed / &H1000000
             ElseIf Number < 0.0 Then
-                'fd: What does this mean?
-                'fd: ms-help://MS.VSCC/MS.MSDNVS/script56/html/vsstmRandomize
-                'fd: ms-help://MS.VSCC/MS.MSDNVS/script56/html/vsfctrnd.htm
-                Randomize(Number)
+                Dim n As Int32 = BitConverter.ToInt32(BitConverter.GetBytes(Number), 0)
+                m_seed = (n And &HFFFFFF) + ((n >> 24) And &HFF)
                 Return Rnd()
             End If
             Return Rnd()
         End Function
         Public Shared Sub Randomize()
-            m_rnd = New Random
+            Randomize(Timer)
         End Sub
-        'TODO: Rethink the double => int conversion
         Public Shared Sub Randomize(ByVal Number As Double)
-            m_rnd = New Random(CType(Number, Integer))
+            Dim n As Int32 = (BitConverter.DoubleToInt64Bits(Number) >> 32)
+            n = n Xor n >> 16
+            m_seed = (n << 8 And &HFFFF00) Or (m_seed And &HFF)
         End Sub
         ' Events
     End Class
