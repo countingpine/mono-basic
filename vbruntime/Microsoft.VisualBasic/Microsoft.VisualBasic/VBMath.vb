@@ -43,29 +43,60 @@ Namespace Microsoft.VisualBasic
         ' Constructors
         ' Properties
         Private Shared m_seed As Int32
+
         ' Methods
         Public Shared Function Rnd() As Single
+
+            ' 24-bit linear congruential generation:
             m_seed = (m_seed * &HFD43FD& + &HC39EC3) And &HFFFFFF
+
+            ' Divide m_seed to get into [0,1) range
             Return m_seed / &H1000000
+
         End Function
+
         Public Shared Function Rnd(ByVal Number As Single) As Single
+
             If Number = 0.0 Then
+                ' Divide m_seed to get into [0,1) range
+                ' Note: m_seed should already be in range [0,2^24)
                 Return m_seed / &H1000000
+
             ElseIf Number < 0.0 Then
+
+                ' Convert Single 'number' bits to Int32 'n':
                 Dim n As Int32 = BitConverter.ToInt32(BitConverter.GetBytes(Number), 0)
-                m_seed = (n And &HFFFFFF) + ((n >> 24) And &HFF)
-                Return Rnd()
+
+                ' Add high 8 bits to low 24 bits (similar to MOD 2^24-1, except where hi8+lo24 >= 2^24-1)
+                ' Note: m_seed will be cropped to 24 bits in Rnd()
+                m_seed = n + ((n >> 24) And &HFF)
+
             End If
+
             Return Rnd()
+
         End Function
+
         Public Shared Sub Randomize()
+
             Randomize(Timer)
+
         End Sub
+
         Public Shared Sub Randomize(ByVal Number As Double)
+
+            ' Convert Double 'number' bits to Int32 'n', discarding lower 32 bits (from the mantissa):
             Dim n As Int32 = (BitConverter.DoubleToInt64Bits(Number) >> 32)
+
+            ' XOR low 16 bits with high 16 bits
             n = n Xor n >> 16
+
+            ' Put result into upper 16 bits of the seed, retaining lower 8 bits from previous seed
             m_seed = (n << 8 And &HFFFF00) Or (m_seed And &HFF)
+
         End Sub
+
         ' Events
+
     End Class
 End Namespace
