@@ -85,14 +85,14 @@ Namespace Microsoft.VisualBasic
 
         Public Shared Sub Randomize(ByVal Number As Double)
 
-            ' Convert Double 'number' bits to Int32 'n', discarding lower 32 bits (from the mantissa):
+            ' Bitwise-convert Double 'Number' to Int32 'n', discarding lower 32 bits (i.e. from the mantissa):
             Dim n As Int32 = (BitConverter.DoubleToInt64Bits(Number) >> 32)
 
             ' XOR low 16 bits with high 16 bits
-            n = n Xor n >> 16
+            n = n Xor (n >> 16)
 
             ' Put result into upper 16 bits of the seed, retaining lower 8 bits from previous seed
-            m_seed = (n << 8 And &HFFFF00) Or (m_seed And &HFF)
+            m_seed = ((n << 8) And &HFFFF00) Or (m_seed And &HFF)
 
         End Sub
 
